@@ -1,0 +1,8 @@
+export const HISTORY_LIMIT = 50;
+export const MIN_SHAPE_SIZE = 4;
+export const HANDLE_SIZE = 8;
+export const ZOOM_MIN = 0.1;
+export const ZOOM_MAX = 4;
+export const GRID_DEFAULT_SIZE = 8;
+export const AUTOSAVE_DEBOUNCE_MS = 500;
+export const EDITOR_SCHEMA_VERSION = 1;

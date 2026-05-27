@@ -1,0 +1,16 @@
+@use 'tokens';
+@use 'reset';
+@use 'buttons';
+
+.toolbar {
+  display: flex;
+  gap: 1rem;
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--color-border);
+  height: var(--toolbar-height);
+  width: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+}

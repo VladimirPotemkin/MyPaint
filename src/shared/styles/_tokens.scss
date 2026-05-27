@@ -1,0 +1,25 @@
+:root {
+  --color-canvas-bg: #1a1a1a;
+  --color-surface: #252525;
+  --color-surface-2: #2f2f2f;
+  --color-border: #3a3a3a;
+  --color-text: #e8e8e8;
+  --color-text-muted: #888;
+  --color-accent: #0066ff;
+  --color-handle: #0066ff;
+  --color-selection: rgba(0, 102, 255, 0.15);
+
+  --handle-size: 8px;
+  --panel-width: 220px;
+  --toolbar-height: 44px;
+  --status-height: 24px;
+}
+
+// SCSS-переменные для использования внутри .scss файлов
+$color-accent: #0066ff;
+$color-text: #e8e8e8;
+$color-surface: #252525;
+$color-border: #3a3a3a;
+$handle-size: 8px;
+$panel-width: 220px;
+$toolbar-height: 44px;

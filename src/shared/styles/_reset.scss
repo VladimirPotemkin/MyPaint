@@ -1,0 +1,28 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: system-ui, 'Segoe UI', sans-serif;
+  background: var(--color-canvas-bg);
+  color: var(--color-text);
+  overflow: hidden; // редактор занимает весь экран, скролл не нужен
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+  font: inherit;
+  color: inherit;
+}
+
+#root {
+  width: 100vw;
+  height: 100dvh;
+  user-select: none; // нет выделения текста при drag
+}
