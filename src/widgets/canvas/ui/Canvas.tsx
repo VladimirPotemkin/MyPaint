@@ -8,7 +8,9 @@ import { useRef } from 'react';
 import { useKeyboard } from '@/features/selection/hooks/useKeyboard';
 import { useDragShapes } from '@/features/shape-tramsform/hooks/useDragShapes';
 import { useResizeShape } from '@/features/shape-tramsform/hooks/useResizeShape';
+import { useRotateShape } from '@/features/shape-tramsform/hooks/useRotateShape';
 import { useViewport } from '@/features/viewport/hooks/useViewport';
+import { useMarqueeSelect } from '@/features/selection/hooks/useMarqueeSelect';
 
 function getBbox(shape: Shape): Bbox {
   return {
@@ -27,35 +29,26 @@ export function Canvas() {
   const clearSelection = useEditorStore((s) => s.clearSelection);
   const toggleSelection = useEditorStore((s) => s.toggleSelection);
   const selection = useEditorStore((s) => s.selection);
-  const svgRef = useRef<SVGSVGElement>(null);
-  useKeyboard();
-  const { onPointerDown, onPointerMove, onPointerUp } = useCreateShape();
   const interaction = useEditorStore((s) => s.interaction);
-  const previewShape =
-    interaction?.mode === 'create' ? interaction.shapesSnapshot['preview'] : null;
+  const svgRef = useRef<SVGSVGElement>(null);
+
+  useKeyboard();
+
+  const { onPointerDown: onCreateDown, onPointerMove: onCreateMove, onPointerUp: onCreateUp } = useCreateShape();
+  const { onPointerDown: onDragDown, onPointerMove: onDragMove, onPointerUp: onDragUp } = useDragShapes();
+  const { onPointerDown: onResizeDown, onPointerMove: onResizeMove, onPointerUp: onResizeUp } = useResizeShape();
+  const { onPointerDown: onRotateDown, onPointerMove: onRotateMove, onPointerUp: onRotateUp } = useRotateShape();
+  const { onPointerDown: onMarqueeDown, onPointerMove: onMarqueeMove, onPointerUp: onMarqueeUp, consumeMarqueeClick } = useMarqueeSelect();
+  const { onPointerDown: onViewportDown, onPointerMove: onViewportMove, onPointerUp: onViewportUp, isPanningNow } = useViewport(svgRef);
+
+  const previewShape = interaction?.mode === 'create' ? interaction.shapesSnapshot['preview'] : null;
+
+  const isLiveInteraction = interaction?.mode === 'drag' || interaction?.mode === 'resize' || interaction?.mode === 'rotate';
+  const shapesToRender = isLiveInteraction
+    ? { ...editorDoc.shapes, ...interaction.shapesSnapshot }
+    : editorDoc.shapes;
 
   const transform = `translate(${viewport.panX}, ${viewport.panY}) scale(${viewport.zoom})`;
-  const {
-    onPointerDown: onDragDown,
-    onPointerMove: onDragMove,
-    onPointerUp: onDragUp,
-  } = useDragShapes();
-  const {
-    onPointerDown: onResizeDown,
-    onPointerMove: onResizeMove,
-    onPointerUp: onResizeUp,
-  } = useResizeShape();
-  const {
-    onPointerDown: onViewportDown,
-    onPointerMove: onViewportMove,
-    onPointerUp: onViewportUp,
-    isPanningNow,
-  } = useViewport(svgRef);
-
-  const shapesToRender =
-    interaction && (interaction.mode === 'drag' || interaction.mode === 'resize')
-      ? { ...editorDoc.shapes, ...interaction.shapesSnapshot }
-      : editorDoc.shapes;
 
   return (
     <svg
@@ -67,24 +60,30 @@ export function Canvas() {
         if (isPanningNow()) return;
         onDragDown(e);
         onResizeDown(e);
-        onPointerDown(e);
+        onRotateDown(e);
+        onCreateDown(e);
+        onMarqueeDown(e);
       }}
       onPointerMove={(e) => {
         onViewportMove(e);
         onDragMove(e);
         onResizeMove(e);
-        onPointerMove(e);
+        onRotateMove(e);
+        onCreateMove(e);
+        onMarqueeMove(e);
       }}
       onPointerUp={(e) => {
         onViewportUp(e);
         onDragUp(e);
         onResizeUp();
-        onPointerUp(e);
+        onRotateUp();
+        onCreateUp(e);
+        onMarqueeUp();
       }}
       onClick={(e) => {
         if (activeTool !== 'select') return;
-        const shapeId = (e.target as Element).closest<HTMLElement>('[data-shape-id]')?.dataset
-          .shapeId;
+        if (consumeMarqueeClick()) return;
+        const shapeId = (e.target as Element).closest<HTMLElement>('[data-shape-id]')?.dataset.shapeId;
         if (!shapeId) {
           clearSelection();
         } else if (e.shiftKey) {
@@ -100,9 +99,27 @@ export function Canvas() {
           return <ShapeView key={id} shape={shape} />;
         })}
         {previewShape && <ShapeView shape={previewShape} />}
+
+        {interaction?.mode === 'marquee' && interaction.marqueeRect && (
+          <rect
+            x={interaction.marqueeRect.x}
+            y={interaction.marqueeRect.y}
+            width={interaction.marqueeRect.width}
+            height={interaction.marqueeRect.height}
+            fill="rgba(66, 133, 244, 0.1)"
+            stroke="rgba(66, 133, 244, 0.8)"
+            strokeWidth={1 / viewport.zoom}
+            pointerEvents="none"
+          />
+        )}
+
         {selection.length > 0 && (
           <SelectionOverlay
-            items={selection.map((id) => ({ id, bbox: getBbox(shapesToRender[id]) }))}
+            items={selection.map((id) => ({
+              id,
+              bbox: getBbox(shapesToRender[id]),
+              rotation: shapesToRender[id].rotation,
+            }))}
           />
         )}
       </g>

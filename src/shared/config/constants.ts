@@ -1,4 +1,5 @@
 export const HISTORY_LIMIT = 50;
+export const ROTATE_HANDLE_OFFSET = 24;
 export const MIN_SHAPE_SIZE = 4;
 export const HANDLE_SIZE = 8;
 export const ZOOM_MIN = 0.1;

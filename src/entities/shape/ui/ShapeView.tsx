@@ -5,6 +5,11 @@ type Props = { shape: Shape };
 export function ShapeView({ shape }: Readonly<Props>) {
   if (!shape.visible) return null;
 
+  const cx = shape.x + shape.width / 2;
+  const cy = shape.y + shape.height / 2;
+  const rotateDeg = shape.rotation * (180 / Math.PI);
+  const transform = shape.rotation === 0 ? undefined : `rotate(${rotateDeg}, ${cx}, ${cy})`;
+
   switch (shape.type) {
     case 'rect':
       return (
@@ -18,20 +23,22 @@ export function ShapeView({ shape }: Readonly<Props>) {
           stroke={shape.stroke}
           strokeWidth={shape.strokeWidth}
           opacity={shape.opacity}
+          transform={transform}
         />
       );
     case 'ellipse':
       return (
         <ellipse
           data-shape-id={shape.id}
-          cx={shape.x + shape.width / 2}
-          cy={shape.y + shape.height / 2}
+          cx={cx}
+          cy={cy}
           rx={shape.width / 2}
           ry={shape.height / 2}
           fill={shape.fill}
           stroke={shape.stroke}
           strokeWidth={shape.strokeWidth}
           opacity={shape.opacity}
+          transform={transform}
         />
       );
     case 'group':

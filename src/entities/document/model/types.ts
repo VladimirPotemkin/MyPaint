@@ -38,4 +38,5 @@ export type InteractionMode = 'idle' | 'drag' | 'resize' | 'rotate' | 'marquee' 
 export type InteractionState = {
   mode: Exclude<InteractionMode, 'idle'>;
   shapesSnapshot: Record<string, Shape>;
+  marqueeRect?: { x: number; y: number; width: number; height: number };
 } | null;
