@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { editorStoreApi, useEditorStore } from '@/entities/document/model/store';
 import { ZOOM_MAX, ZOOM_MIN } from '@/shared/config/constants';
+import { isEditableTarget, Key, matchesCode } from '@/shared/lib/keyboard';
 
 const ZOOM_SENSITIVITY = 0.001;
 
@@ -54,14 +55,15 @@ export function useViewport(svgRef: React.RefObject<SVGSVGElement | null>) {
   // Space key tracking
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.code === 'Space' && !e.repeat) {
+      if (isEditableTarget(e)) return;
+      if (matchesCode(e, Key.Space) && !e.repeat) {
         e.preventDefault();
         isSpaceDown.current = true;
         if (svgRef.current) svgRef.current.style.cursor = 'grab';
       }
     };
     const onKeyUp = (e: KeyboardEvent) => {
-      if (e.code === 'Space') {
+      if (matchesCode(e, Key.Space)) {
         isSpaceDown.current = false;
         isPanning.current = false;
         panStart.current = null;

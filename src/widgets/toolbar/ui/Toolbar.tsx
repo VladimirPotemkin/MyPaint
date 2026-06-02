@@ -1,14 +1,21 @@
 import { useRef } from 'react';
 import { useEditorStore, editorStoreApi } from '@/entities/document/model/store';
 import { serialize, deserialize } from '@/features/persistence/lib/serialize';
+import { groupSelectedShapes, ungroupSelectedShape } from '@/features/selection/lib/groupSelection';
 
 export function Toolbar() {
   const setActiveTool = useEditorStore((state) => state.setActiveTool);
   const activeTool = useEditorStore((state) => state.activeTool);
   const snapToGrid = useEditorStore((state) => state.grid.snapToGrid);
   const setGrid = useEditorStore((state) => state.setGrid);
+  const selection = useEditorStore((state) => state.selection);
+  const rootChildIds = useEditorStore((state) => state.document.rootChildIds);
+  const shapes = useEditorStore((state) => state.document.shapes);
   const canUndo = useEditorStore((state) => state.canUndo);
   const canRedo = useEditorStore((state) => state.canRedo);
+  const rootSelectedCount = selection.filter((id) => rootChildIds.includes(id)).length;
+  const canGroup = rootSelectedCount >= 2;
+  const canUngroup = selection.length === 1 && shapes[selection[0]]?.type === 'group';
   const undo = useEditorStore((state) => state.undo);
   const redo = useEditorStore((state) => state.redo);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -84,6 +91,27 @@ export function Toolbar() {
         title="Snap to grid"
       >
         Snap
+      </button>
+      <div style={{ width: 1, background: 'var(--color-border)', margin: '8px 4px' }} aria-hidden="true" />
+      <button
+        type="button"
+        className="toolbar__button"
+        onClick={groupSelectedShapes}
+        disabled={!canGroup}
+        aria-label="Group selection"
+        title="Group (Ctrl+G)"
+      >
+        Group
+      </button>
+      <button
+        type="button"
+        className="toolbar__button"
+        onClick={ungroupSelectedShape}
+        disabled={!canUngroup}
+        aria-label="Ungroup"
+        title="Ungroup (Ctrl+Shift+G)"
+      >
+        Ungroup
       </button>
       <div style={{ width: 1, background: 'var(--color-border)', margin: '8px 4px' }} aria-hidden="true" />
       <button

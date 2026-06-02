@@ -1,9 +1,9 @@
 import { memo } from 'react';
 import type { Shape } from '@/entities/document/model/types';
 
-type Props = { shape: Shape };
+type Props = { shape: Shape; allShapes?: Record<string, Shape> };
 
-export const ShapeView = memo(function ShapeView({ shape }: Readonly<Props>) {
+export const ShapeView = memo(function ShapeView({ shape, allShapes }: Readonly<Props>) {
   if (!shape.visible) return null;
 
   const cx = shape.x + shape.width / 2;
@@ -42,7 +42,23 @@ export const ShapeView = memo(function ShapeView({ shape }: Readonly<Props>) {
           transform={transform}
         />
       );
-    case 'group':
-      return null;
+    case 'group': {
+      if (!allShapes) return null;
+      return (
+        <g
+          data-shape-id={shape.id}
+          transform={`translate(${shape.x}, ${shape.y})`}
+          opacity={shape.opacity}
+        >
+          {/* transparent hit-area so empty space inside the group is clickable */}
+          <rect x={0} y={0} width={shape.width} height={shape.height} fill="transparent" />
+          {shape.childIds.map((childId) => {
+            const child = allShapes[childId];
+            if (!child) return null;
+            return <ShapeView key={childId} shape={child} allShapes={allShapes} />;
+          })}
+        </g>
+      );
+    }
   }
 });

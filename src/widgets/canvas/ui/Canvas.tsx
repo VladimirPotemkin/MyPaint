@@ -1,25 +1,14 @@
 import { useEditorStore } from '@/entities/document/model/store';
-import type { Shape } from '@/entities/document/model/types';
 import { ShapeView } from '@/entities/shape/ui/ShapeView';
-import type { Bbox } from '@/shared/lib/bbox';
 import { SelectionOverlay } from '@/widgets/selectionOverlay/ui/SelectionOverlay';
+import { getRootShapeId, getSelectionOverlayItems } from '@/entities/shape/lib/shapeCoords';
 import { useCreateShape } from '@/features/shape-create/ui/useCreateShape';
 import { useRef } from 'react';
-import { useKeyboard } from '@/features/selection/hooks/useKeyboard';
 import { useDragShapes } from '@/features/shape-tramsform/hooks/useDragShapes';
 import { useResizeShape } from '@/features/shape-tramsform/hooks/useResizeShape';
 import { useRotateShape } from '@/features/shape-tramsform/hooks/useRotateShape';
 import { useViewport } from '@/features/viewport/hooks/useViewport';
 import { useMarqueeSelect } from '@/features/selection/hooks/useMarqueeSelect';
-
-function getBbox(shape: Shape): Bbox {
-  return {
-    x: shape.x,
-    y: shape.y,
-    width: shape.width,
-    height: shape.height,
-  };
-}
 
 export function Canvas() {
   const editorDoc = useEditorStore((s) => s.document);
@@ -32,8 +21,6 @@ export function Canvas() {
   const selection = useEditorStore((s) => s.selection);
   const interaction = useEditorStore((s) => s.interaction);
   const svgRef = useRef<SVGSVGElement>(null);
-
-  useKeyboard();
 
   const { onPointerDown: onCreateDown, onPointerMove: onCreateMove, onPointerUp: onCreateUp } = useCreateShape();
   const { onPointerDown: onDragDown, onPointerMove: onDragMove, onPointerUp: onDragUp } = useDragShapes();
@@ -54,11 +41,13 @@ export function Canvas() {
   return (
     <svg
       ref={svgRef}
+      tabIndex={0}
       width="100%"
       height="100%"
       style={{ userSelect: 'none', touchAction: 'none', outline: 'none', display: 'block' }}
       onContextMenu={(e) => e.preventDefault()}
       onPointerDown={(e) => {
+        svgRef.current?.focus({ preventScroll: true });
         onViewportDown(e);
         if (isPanningNow()) return;
         onDragDown(e);
@@ -89,10 +78,13 @@ export function Canvas() {
         const shapeId = (e.target as Element).closest<HTMLElement>('[data-shape-id]')?.dataset.shapeId;
         if (!shapeId) {
           clearSelection();
-        } else if (e.shiftKey) {
-          toggleSelection(shapeId);
+          return;
+        }
+        const rootId = getRootShapeId(shapeId, editorDoc.shapes);
+        if (e.shiftKey) {
+          toggleSelection(rootId);
         } else {
-          setSelection([shapeId]);
+          setSelection([rootId]);
         }
       }}
     >
@@ -127,9 +119,9 @@ export function Canvas() {
         )}
         {editorDoc.rootChildIds.map((id) => {
           const shape = shapesToRender[id];
-          return <ShapeView key={id} shape={shape} />;
+          return <ShapeView key={id} shape={shape} allShapes={shapesToRender} />;
         })}
-        {previewShape && <ShapeView shape={previewShape} />}
+        {previewShape && <ShapeView shape={previewShape} allShapes={shapesToRender} />}
 
         {interaction?.mode === 'marquee' && interaction.marqueeRect && (
           <rect
@@ -169,13 +161,7 @@ export function Canvas() {
         )}
 
         {selection.length > 0 && (
-          <SelectionOverlay
-            items={selection.map((id) => ({
-              id,
-              bbox: getBbox(shapesToRender[id]),
-              rotation: shapesToRender[id].rotation,
-            }))}
-          />
+          <SelectionOverlay items={getSelectionOverlayItems(selection, shapesToRender)} />
         )}
       </g>
     </svg>

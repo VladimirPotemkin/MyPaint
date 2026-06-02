@@ -3,7 +3,7 @@ import { useEditorStore } from "@/entities/document/model/store";
 import { anchors } from '@/shared/lib/bbox';
 import { HANDLE_SIZE, ROTATE_HANDLE_OFFSET } from '@/shared/config/constants';
 
-type Props = { items: Array<{ id: string; bbox: Bbox; rotation: number }> }
+type Props = { items: Array<{ id: string; bbox: Bbox; rotation: number; showHandles: boolean }> }
 
 // Base handle angles in degrees (direction of movement, from east = 0)
 const HANDLE_BASE_ANGLE: Record<string, number> = {
@@ -31,7 +31,7 @@ export function SelectionOverlay({ items }: Readonly<Props>) {
 
   return (
     <g id="selection-overlay">
-      {items.map(({ id, bbox, rotation }) => {
+      {items.map(({ id, bbox, rotation, showHandles }) => {
         const cx = bbox.x + bbox.width / 2;
         const cy = bbox.y + bbox.height / 2;
         const rotateDeg = rotation * (180 / Math.PI);
@@ -45,7 +45,7 @@ export function SelectionOverlay({ items }: Readonly<Props>) {
               strokeWidth={1 / viewport.zoom} pointerEvents="none"
             />
 
-            {Object.entries(anchors(bbox)).map(([handle, point]) => {
+            {showHandles && Object.entries(anchors(bbox)).map(([handle, point]) => {
               if (handle === 'c') return null;
               return (
                 <rect
@@ -65,25 +65,29 @@ export function SelectionOverlay({ items }: Readonly<Props>) {
               );
             })}
 
-            <circle
-              data-handle="rotate"
-              data-shape-id={id}
-              cx={cx}
-              cy={bbox.y - rotateOffset}
-              r={rotateRadius}
-              fill="white"
-              stroke="var(--color-handle)"
-              strokeWidth={1 / viewport.zoom}
-              cursor="grab"
-              pointerEvents="all"
-            />
-            <line
-              x1={cx} y1={bbox.y}
-              x2={cx} y2={bbox.y - rotateOffset}
-              stroke="var(--color-handle)"
-              strokeWidth={1 / viewport.zoom}
-              pointerEvents="none"
-            />
+            {showHandles && (
+              <>
+                <circle
+                  data-handle="rotate"
+                  data-shape-id={id}
+                  cx={cx}
+                  cy={bbox.y - rotateOffset}
+                  r={rotateRadius}
+                  fill="white"
+                  stroke="var(--color-handle)"
+                  strokeWidth={1 / viewport.zoom}
+                  cursor="grab"
+                  pointerEvents="all"
+                />
+                <line
+                  x1={cx} y1={bbox.y}
+                  x2={cx} y2={bbox.y - rotateOffset}
+                  stroke="var(--color-handle)"
+                  strokeWidth={1 / viewport.zoom}
+                  pointerEvents="none"
+                />
+              </>
+            )}
           </g>
         );
       })}

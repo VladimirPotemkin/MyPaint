@@ -9,6 +9,7 @@ import { MoveShapesCommand } from '@/entities/document/model/commands/MoveShapes
 import { union } from '@/shared/lib/bbox';
 import type { Bbox } from '@/shared/lib/bbox';
 import { snapBboxToObjects, snapToGrid } from '@/shared/lib/snap';
+import { getRootShapeId } from '@/entities/shape/lib/shapeCoords';
 
 export function useDragShapes() {
   const startPoint = useRef<Vec2 | null>(null);
@@ -38,7 +39,8 @@ export function useDragShapes() {
 
     // Сохраняем оригинальные позиции всех выделенных фигур
     const { selection, document: doc } = editorStoreApi.getState();
-    const ids = selection.includes(shapeId) ? selection : [shapeId];
+    const rootId = getRootShapeId(shapeId, doc.shapes);
+    const ids = selection.includes(rootId) ? selection : [rootId];
     originalShapes.current = Object.fromEntries(
       ids.filter((id) => !doc.shapes[id]?.locked).map((id) => [id, doc.shapes[id]]),
     );

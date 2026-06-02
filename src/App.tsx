@@ -5,8 +5,10 @@ import { LayersPanel } from '@/widgets/layers-panel/ui/LayersPanel';
 import { editorStoreApi } from '@/entities/document/model/store';
 import { deserialize, STORAGE_KEY } from '@/features/persistence/lib/serialize';
 import { useAutosave } from '@/features/persistence/hooks/useAutosave';
+import { useKeyboard } from '@/features/selection/hooks/useKeyboard';
 
 export default function App() {
+  useKeyboard();
   useEffect(() => {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return;
