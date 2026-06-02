@@ -11,7 +11,7 @@ const HANDLE_BASE_ANGLE: Record<string, number> = {
   s: 90, sw: 135, w: 180, nw: -135,
 };
 // CSS cursors indexed by snapped angle slot (0=0°, 1=45°, 2=90°, 3=135°)
-const CURSORS_BY_SLOT = ['ew-resize', 'nesw-resize', 'ns-resize', 'nwse-resize'];
+const CURSORS_BY_SLOT = ['ew-resize', 'nwse-resize', 'ns-resize', 'nesw-resize'];
 
 function getResizeCursor(handle: string, rotationRad: number): string {
   const base = HANDLE_BASE_ANGLE[handle];

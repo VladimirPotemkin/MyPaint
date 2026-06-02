@@ -39,4 +39,5 @@ export type InteractionState = {
   mode: Exclude<InteractionMode, 'idle'>;
   shapesSnapshot: Record<string, Shape>;
   marqueeRect?: { x: number; y: number; width: number; height: number };
+  snapGuides?: { guideX?: number; guideY?: number };
 } | null;

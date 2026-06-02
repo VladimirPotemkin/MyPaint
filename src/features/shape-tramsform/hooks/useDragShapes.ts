@@ -6,6 +6,9 @@ import { screenToWorld } from '@/shared/lib/viewport';
 import { sub } from '@/shared/lib/point';
 import { applyCommand } from '@/entities/document/model/commands';
 import { MoveShapesCommand } from '@/entities/document/model/commands/MoveShapesCommand';
+import { union } from '@/shared/lib/bbox';
+import type { Bbox } from '@/shared/lib/bbox';
+import { snapBboxToObjects, snapToGrid } from '@/shared/lib/snap';
 
 export function useDragShapes() {
   const startPoint = useRef<Vec2 | null>(null);
@@ -54,13 +57,46 @@ export function useDragShapes() {
     const current = screenToWorld(viewport, { x: e.clientX - rect.left, y: e.clientY - rect.top });
     const delta = sub(current, startPoint.current);
 
-    const shapesSnapshot = Object.fromEntries(
+    const shapesSnapshot: Record<string, Shape> = Object.fromEntries(
       Object.entries(originalShapes.current).map(([id, shape]) => [
         id,
         { ...shape, x: shape.x + delta.x, y: shape.y + delta.y },
       ]),
     );
-    setInteraction({ mode: 'drag', shapesSnapshot });
+    const movingShapes = Object.values(shapesSnapshot);
+    if (movingShapes.length === 0) {
+      setInteraction({ mode: 'drag', shapesSnapshot });
+      return;
+    }
+
+    const combined = movingShapes
+      .slice(1)
+      .reduce<Bbox>((bbox, shape) => union(bbox, shape), movingShapes[0]);
+    const { document: doc, selection, grid } = editorStoreApi.getState();
+    const movingIds = new Set(Object.keys(shapesSnapshot));
+    const candidateBboxes = doc.rootChildIds
+      .filter((id) => !selection.includes(id) && !movingIds.has(id))
+      .map((id) => doc.shapes[id])
+      .filter((shape): shape is Shape => Boolean(shape));
+    const threshold = 8 / viewport.zoom;
+    const { guideX, guideY, ...snap } = snapBboxToObjects(combined, candidateBboxes, threshold);
+    let snapDx = snap.dx;
+    let snapDy = snap.dy;
+
+    if (grid.snapToGrid && snapDx === 0) {
+      snapDx = snapToGrid(combined.x, grid.size) - combined.x;
+    }
+    if (grid.snapToGrid && snapDy === 0) {
+      snapDy = snapToGrid(combined.y, grid.size) - combined.y;
+    }
+
+    const correctedSnaps: Record<string, Shape> = Object.fromEntries(
+      Object.entries(shapesSnapshot).map(([id, shape]) => [
+        id,
+        { ...shape, x: shape.x + snapDx, y: shape.y + snapDy },
+      ]),
+    );
+    setInteraction({ mode: 'drag', shapesSnapshot: correctedSnaps, snapGuides: { guideX, guideY } });
   };
 
   const onPointerUp = (e: React.PointerEvent<SVGSVGElement>) => {
@@ -72,6 +108,8 @@ export function useDragShapes() {
 
     if (!wasDragging || !savedStart) return; // простой клик — не трогаем историю
 
+    const interaction = editorStoreApi.getState().interaction;
+    const snappedSnapshot = interaction?.mode === 'drag' ? interaction.shapesSnapshot : null;
     setInteraction(null);
 
     const rect = e.currentTarget.getBoundingClientRect();
@@ -82,8 +120,8 @@ export function useDragShapes() {
       id,
       fromX: shape.x,
       fromY: shape.y,
-      toX: shape.x + delta.x,
-      toY: shape.y + delta.y,
+      toX: snappedSnapshot?.[id]?.x ?? shape.x + delta.x,
+      toY: snappedSnapshot?.[id]?.y ?? shape.y + delta.y,
     }));
 
     if (moves.length > 0) {

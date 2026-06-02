@@ -6,13 +6,24 @@ import { applyCommand } from '@/entities/document/model/commands';
 import { AddShapeCommand } from '@/entities/document/model/commands/AddShapeCommand';
 import type { Vec2 } from '@/shared/lib/point';
 import type { Shape } from '@/entities/document/model/types';
+import { snapToGrid } from '@/shared/lib/snap';
 
 // Строим Shape из двух точек — вынесено чтобы не дублировать в move и up
-function buildShape(type: 'rect' | 'ellipse', start: Vec2, end: Vec2): Shape {
-  const x = Math.min(start.x, end.x);
-  const y = Math.min(start.y, end.y);
-  const width = Math.abs(end.x - start.x);
-  const height = Math.abs(end.y - start.y);
+function buildShape(
+  type: 'rect' | 'ellipse',
+  start: Vec2,
+  end: Vec2,
+  gridSize: number | null,
+): Shape {
+  const startX = gridSize === null ? start.x : snapToGrid(start.x, gridSize);
+  const startY = gridSize === null ? start.y : snapToGrid(start.y, gridSize);
+  const endX = gridSize === null ? end.x : snapToGrid(end.x, gridSize);
+  const endY = gridSize === null ? end.y : snapToGrid(end.y, gridSize);
+  const x = Math.min(startX, endX);
+  const y = Math.min(startY, endY);
+  const width = Math.abs(endX - startX);
+  const height = Math.abs(endY - startY);
+
   return {
     id: crypto.randomUUID(),
     name: type === 'rect' ? 'Rectangle' : 'Ellipse',
@@ -56,7 +67,9 @@ export function useCreateShape() {
     if (!startPoint.current || !drawingType.current) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const current = screenToWorld(viewport, { x: e.clientX - rect.left, y: e.clientY - rect.top });
-    const preview = buildShape(drawingType.current, startPoint.current, current);
+    const { grid } = editorStoreApi.getState();
+    const gridSize = grid.snapToGrid ? grid.size : null;
+    const preview = buildShape(drawingType.current, startPoint.current, current, gridSize);
     setInteraction({ mode: 'create', shapesSnapshot: { preview } });
   };
 
@@ -64,7 +77,9 @@ export function useCreateShape() {
     if (!startPoint.current || !drawingType.current) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const current = screenToWorld(viewport, { x: e.clientX - rect.left, y: e.clientY - rect.top });
-    const shape = buildShape(drawingType.current, startPoint.current, current);
+    const { grid } = editorStoreApi.getState();
+    const gridSize = grid.snapToGrid ? grid.size : null;
+    const shape = buildShape(drawingType.current, startPoint.current, current, gridSize);
 
     if (shape.width >= MIN_SHAPE_SIZE && shape.height >= MIN_SHAPE_SIZE) {
       applyCommand(new AddShapeCommand(shape), editorStoreApi);

@@ -3,6 +3,8 @@ import { useEditorStore } from "@/entities/document/model/store";
 export function Toolbar() {
   const setActiveTool = useEditorStore((state) => state.setActiveTool);
   const activeTool = useEditorStore((state) => state.activeTool);
+  const snapToGrid = useEditorStore((state) => state.grid.snapToGrid);
+  const setGrid = useEditorStore((state) => state.setGrid);
   const canUndo = useEditorStore((state) => state.canUndo);
   const canRedo = useEditorStore((state) => state.canRedo);
   const undo = useEditorStore((state) => state.undo);
@@ -15,6 +17,12 @@ export function Toolbar() {
       <button className={`toolbar__button ${activeTool === 'ellipse' ? 'toolbar__button--active' : ''}`} onClick={() => setActiveTool('ellipse')}>Ellipse</button>
       <button className={`toolbar__button ${activeTool === 'pan' ? 'toolbar__button--active' : ''}`} onClick={() => setActiveTool('pan')}>Pan</button>
       <div style={{ width: 1, background: 'var(--color-border)', margin: '8px 4px' }} />
+      <button
+        className={`toolbar__button ${snapToGrid ? 'toolbar__button--active' : ''}`}
+        onClick={() => setGrid({ snapToGrid: !snapToGrid })}
+      >
+        Snap
+      </button>
       <button className="toolbar__button" onClick={undo} disabled={!canUndo}>↩ Undo</button>
       <button className="toolbar__button" onClick={redo} disabled={!canRedo}>↪ Redo</button>
     </div>

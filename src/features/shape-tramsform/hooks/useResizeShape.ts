@@ -7,6 +7,7 @@ import { screenToWorld } from '@/shared/lib/viewport';
 import { MIN_SHAPE_SIZE } from '@/shared/config/constants';
 import { applyCommand } from '@/entities/document/model/commands';
 import { ResizeShapeCommand } from '@/entities/document/model/commands/ResizeShapeCommand';
+import { snapToGrid } from '@/shared/lib/snap';
 
 type Sizes = Pick<Shape, 'x' | 'y' | 'width' | 'height'>;
 type Handle = 'nw' | 'n' | 'ne' | 'e' | 'se' | 's' | 'sw' | 'w';
@@ -69,7 +70,14 @@ export function useResizeShape() {
     const rotation = rotationRef.current;
 
     // Map cursor into the shape's local (pre-rotation) coordinate system
-    const cursorLocal = rotatePoint(cursorWorld, W0, -rotation);
+    let cursorLocal = rotatePoint(cursorWorld, W0, -rotation);
+    const { grid } = editorStoreApi.getState();
+    if (grid.snapToGrid) {
+      cursorLocal = {
+        x: snapToGrid(cursorLocal.x, grid.size),
+        y: snapToGrid(cursorLocal.y, grid.size),
+      };
+    }
 
     const isVerticalOnly = handle === 'n' || handle === 's';
     const isHorizontalOnly = handle === 'e' || handle === 'w';

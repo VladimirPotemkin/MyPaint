@@ -24,6 +24,7 @@ function getBbox(shape: Shape): Bbox {
 export function Canvas() {
   const editorDoc = useEditorStore((s) => s.document);
   const viewport = useEditorStore((s) => s.viewport);
+  const grid = useEditorStore((s) => s.grid);
   const activeTool = useEditorStore((s) => s.activeTool);
   const setSelection = useEditorStore((s) => s.setSelection);
   const clearSelection = useEditorStore((s) => s.clearSelection);
@@ -93,7 +94,35 @@ export function Canvas() {
         }
       }}
     >
+      <defs>
+        <pattern
+          id="canvas-grid-pattern"
+          x={0}
+          y={0}
+          width={grid.size}
+          height={grid.size}
+          patternUnits="userSpaceOnUse"
+        >
+          <path
+            d={`M ${grid.size} 0 L 0 0 0 ${grid.size}`}
+            fill="none"
+            stroke="var(--color-border)"
+            strokeWidth={1 / viewport.zoom}
+            opacity={0.6}
+          />
+        </pattern>
+      </defs>
       <g transform={transform}>
+        {grid.enabled && grid.snapToGrid && (
+          <rect
+            x={-99999}
+            y={-99999}
+            width={199998}
+            height={199998}
+            fill="url(#canvas-grid-pattern)"
+            pointerEvents="none"
+          />
+        )}
         {editorDoc.rootChildIds.map((id) => {
           const shape = shapesToRender[id];
           return <ShapeView key={id} shape={shape} />;
@@ -109,6 +138,30 @@ export function Canvas() {
             fill="rgba(66, 133, 244, 0.1)"
             stroke="rgba(66, 133, 244, 0.8)"
             strokeWidth={1 / viewport.zoom}
+            pointerEvents="none"
+          />
+        )}
+        {interaction?.snapGuides?.guideX !== undefined && (
+          <line
+            x1={interaction.snapGuides.guideX}
+            y1={-99999}
+            x2={interaction.snapGuides.guideX}
+            y2={99999}
+            stroke="var(--color-accent)"
+            strokeWidth={1 / viewport.zoom}
+            strokeDasharray={`${4 / viewport.zoom}`}
+            pointerEvents="none"
+          />
+        )}
+        {interaction?.snapGuides?.guideY !== undefined && (
+          <line
+            x1={-99999}
+            y1={interaction.snapGuides.guideY}
+            x2={99999}
+            y2={interaction.snapGuides.guideY}
+            stroke="var(--color-accent)"
+            strokeWidth={1 / viewport.zoom}
+            strokeDasharray={`${4 / viewport.zoom}`}
             pointerEvents="none"
           />
         )}
