@@ -1,7 +1,8 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import { GRID_DEFAULT_SIZE, ZOOM_MIN, ZOOM_MAX } from '@/shared/config/constants';
+import { GRID_DEFAULT_SIZE, HISTORY_LIMIT } from '@/shared/config/constants';
 import type { Shape, EditorDocument, ViewportState, ActiveTool, InteractionState } from './types';
+import type { Command } from './commands';
 
 export type EditorStore = {
   // ── Слайс document ──────────────────────────────
@@ -33,9 +34,13 @@ export type EditorStore = {
   interaction: InteractionState;
   setInteraction: (state: InteractionState) => void;
 
-  // ── Слайс history (заглушка до Этапа 9) ─────────
+  // ── Слайс history ───────────────────────────────
+  past: Command[];
+  future: Command[];
   canUndo: boolean;
   canRedo: boolean;
+  undo: () => void;
+  redo: () => void;
 };
 
 const DEMO_SHAPE_ID = crypto.randomUUID();
@@ -65,7 +70,7 @@ const initialDocument: EditorDocument = {
 
 export const useEditorStore = create<EditorStore>()(
   devtools(
-    (set) => ({
+    (set, get) => ({
       // document
       document: initialDocument,
       addShape: (shape) =>
@@ -93,6 +98,7 @@ export const useEditorStore = create<EditorStore>()(
               shapes: rest,
               rootChildIds: s.document.rootChildIds.filter((i) => i !== id),
             },
+            selection: s.selection.filter((i) => i !== id),
           };
         }),
       setRootChildIds: (ids) => set((s) => ({ document: { ...s.document, rootChildIds: ids } })),
@@ -124,9 +130,28 @@ export const useEditorStore = create<EditorStore>()(
       interaction: null,
       setInteraction: (state) => set({ interaction: state }),
 
-      // history stub
+      // history
+      past: [],
+      future: [],
       canUndo: false,
       canRedo: false,
+      undo: () => {
+        const { past, future } = get();
+        if (past.length === 0) return;
+        const cmd = past.at(-1)!;
+        cmd.undo(useEditorStore);
+        const newPast = past.slice(0, -1);
+        const newFuture = [cmd, ...future].slice(0, HISTORY_LIMIT);
+        set({ past: newPast, future: newFuture, canUndo: newPast.length > 0, canRedo: true });
+      },
+      redo: () => {
+        const { past, future } = get();
+        if (future.length === 0) return;
+        const [cmd, ...rest] = future;
+        cmd.execute(useEditorStore);
+        const newPast = [...past, cmd].slice(-HISTORY_LIMIT);
+        set({ past: newPast, future: rest, canUndo: true, canRedo: rest.length > 0 });
+      },
     }),
     { name: 'EditorStore' },
   ),
