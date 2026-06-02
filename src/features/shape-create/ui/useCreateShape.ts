@@ -23,7 +23,7 @@ function buildShape(type: 'rect' | 'ellipse', start: Vec2, end: Vec2): Shape {
     width,
     height,
     rotation: 0,
-    fill: '#4f8ef7',
+    fill: type === 'ellipse' ? '#ff3b30' : '#4f8ef7',
     stroke: 'transparent',
     strokeWidth: 0,
     opacity: 1,
