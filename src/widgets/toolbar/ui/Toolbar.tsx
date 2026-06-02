@@ -30,47 +30,76 @@ export function Toolbar() {
     const text = await file.text();
     const state = deserialize(text);
     if (!state) return;
-    editorStoreApi.setState({ document: state.document, viewport: state.viewport, grid: state.grid });
+    editorStoreApi.setState({
+      document: state.document,
+      viewport: state.viewport,
+      grid: state.grid,
+    });
   };
 
   return (
-    <div className="toolbar">
+    <div className="toolbar" role="toolbar" aria-label="Editor tools">
       <button
         className={`toolbar__button ${activeTool === 'select' ? 'toolbar__button--active' : ''}`}
         onClick={() => setActiveTool('select')}
+        aria-label="Select tool"
+        aria-pressed={activeTool === 'select'}
+        title="Select (V)"
       >
         Select
       </button>
       <button
         className={`toolbar__button ${activeTool === 'rect' ? 'toolbar__button--active' : ''}`}
         onClick={() => setActiveTool('rect')}
+        aria-label="Rectangle tool"
+        aria-pressed={activeTool === 'rect'}
+        title="Rectangle (R)"
       >
         Rect
       </button>
       <button
         className={`toolbar__button ${activeTool === 'ellipse' ? 'toolbar__button--active' : ''}`}
         onClick={() => setActiveTool('ellipse')}
+        aria-label="Ellipse tool"
+        aria-pressed={activeTool === 'ellipse'}
+        title="Ellipse (E)"
       >
         Ellipse
       </button>
       <button
         className={`toolbar__button ${activeTool === 'pan' ? 'toolbar__button--active' : ''}`}
         onClick={() => setActiveTool('pan')}
+        aria-label="Pan tool"
+        aria-pressed={activeTool === 'pan'}
+        title="Pan (Space + drag)"
       >
         Pan
       </button>
-      <div style={{ width: 1, background: 'var(--color-border)', margin: '8px 4px' }} />
+      <div style={{ width: 1, background: 'var(--color-border)', margin: '8px 4px' }} aria-hidden="true" />
       <button
         className={`toolbar__button ${snapToGrid ? 'toolbar__button--active' : ''}`}
         onClick={() => setGrid({ snapToGrid: !snapToGrid })}
+        aria-label="Toggle snap to grid"
+        aria-pressed={snapToGrid}
+        title="Snap to grid"
       >
         Snap
       </button>
-      <div style={{ width: 1, background: 'var(--color-border)', margin: '8px 4px' }} />
-      <button className="toolbar__button" onClick={handleExport}>
+      <div style={{ width: 1, background: 'var(--color-border)', margin: '8px 4px' }} aria-hidden="true" />
+      <button
+        className="toolbar__button"
+        onClick={handleExport}
+        aria-label="Export as JSON"
+        title="Export scene as JSON"
+      >
         Export
       </button>
-      <button className="toolbar__button" onClick={() => fileInputRef.current?.click()}>
+      <button
+        className="toolbar__button"
+        onClick={() => fileInputRef.current?.click()}
+        aria-label="Import JSON"
+        title="Import scene from JSON"
+      >
         Import
       </button>
       <input
@@ -80,11 +109,23 @@ export function Toolbar() {
         onChange={handleImport}
         style={{ display: 'none' }}
       />
-      <div style={{ width: 1, background: 'var(--color-border)', margin: '8px 4px' }} />
-      <button className="toolbar__button" onClick={undo} disabled={!canUndo}>
+      <div style={{ width: 1, background: 'var(--color-border)', margin: '8px 4px' }} aria-hidden="true" />
+      <button
+        className="toolbar__button"
+        onClick={undo}
+        disabled={!canUndo}
+        aria-label="Undo"
+        title="Undo (Ctrl+Z)"
+      >
         ↩ Undo
       </button>
-      <button className="toolbar__button" onClick={redo} disabled={!canRedo}>
+      <button
+        className="toolbar__button"
+        onClick={redo}
+        disabled={!canRedo}
+        aria-label="Redo"
+        title="Redo (Ctrl+Y)"
+      >
         ↪ Redo
       </button>
     </div>

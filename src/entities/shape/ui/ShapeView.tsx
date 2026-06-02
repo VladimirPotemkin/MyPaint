@@ -1,8 +1,9 @@
+import { memo } from 'react';
 import type { Shape } from '@/entities/document/model/types';
 
 type Props = { shape: Shape };
 
-export function ShapeView({ shape }: Readonly<Props>) {
+export const ShapeView = memo(function ShapeView({ shape }: Readonly<Props>) {
   if (!shape.visible) return null;
 
   const cx = shape.x + shape.width / 2;
@@ -44,4 +45,4 @@ export function ShapeView({ shape }: Readonly<Props>) {
     case 'group':
       return null;
   }
-}
+});

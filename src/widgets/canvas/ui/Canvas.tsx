@@ -56,6 +56,8 @@ export function Canvas() {
       ref={svgRef}
       width="100%"
       height="100%"
+      style={{ userSelect: 'none', touchAction: 'none', outline: 'none', display: 'block' }}
+      onContextMenu={(e) => e.preventDefault()}
       onPointerDown={(e) => {
         onViewportDown(e);
         if (isPanningNow()) return;
