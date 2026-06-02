@@ -17,8 +17,10 @@ type ShapeBase = {
 
 export type RectShape = ShapeBase & { type: 'rect' };
 export type EllipseShape = ShapeBase & { type: 'ellipse' };
+export type TriangleShape = ShapeBase & { type: 'triangle'; flipX?: boolean; flipY?: boolean };
+export type StarShape = ShapeBase & { type: 'star'; flipX?: boolean; flipY?: boolean };
 export type GroupShape = ShapeBase & { type: 'group'; childIds: string[] };
-export type Shape = RectShape | EllipseShape | GroupShape;
+export type Shape = RectShape | EllipseShape | TriangleShape | StarShape | GroupShape;
 
 export type EditorDocument = {
   shapes: Record<string, Shape>;
@@ -31,7 +33,7 @@ export type ViewportState = {
   zoom: number;
 };
 
-export type ActiveTool = 'select' | 'rect' | 'ellipse' | 'pan';
+export type ActiveTool = 'select' | 'rect' | 'ellipse' | 'triangle' | 'star' | 'pan';
 
 export type InteractionMode = 'idle' | 'drag' | 'resize' | 'rotate' | 'marquee' | 'create';
 

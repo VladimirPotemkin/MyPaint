@@ -11,6 +11,8 @@ export const Key = {
   KeyV: 'KeyV',
   KeyR: 'KeyR',
   KeyE: 'KeyE',
+  KeyT: 'KeyT',
+  KeyS: 'KeyS',
 } as const;
 
 export type KeyCode = (typeof Key)[keyof typeof Key];

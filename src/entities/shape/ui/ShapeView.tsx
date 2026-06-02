@@ -1,7 +1,19 @@
 import { memo } from 'react';
 import type { Shape } from '@/entities/document/model/types';
+import {
+  getLocalPolygonTransform,
+  getStarPoints,
+  getTrianglePoints,
+} from '@/entities/shape/lib/shapePolygons';
 
 type Props = { shape: Shape; allShapes?: Record<string, Shape> };
+
+const polygonProps = (shape: Shape) => ({
+  fill: shape.fill,
+  stroke: shape.stroke,
+  strokeWidth: shape.strokeWidth,
+  opacity: shape.opacity,
+});
 
 export const ShapeView = memo(function ShapeView({ shape, allShapes }: Readonly<Props>) {
   if (!shape.visible) return null;
@@ -40,6 +52,40 @@ export const ShapeView = memo(function ShapeView({ shape, allShapes }: Readonly<
           strokeWidth={shape.strokeWidth}
           opacity={shape.opacity}
           transform={transform}
+        />
+      );
+    case 'triangle':
+      return (
+        <polygon
+          data-shape-id={shape.id}
+          points={getTrianglePoints(shape.width, shape.height)}
+          transform={getLocalPolygonTransform(
+            shape.x,
+            shape.y,
+            shape.width,
+            shape.height,
+            shape.rotation,
+            shape.flipX,
+            shape.flipY,
+          )}
+          {...polygonProps(shape)}
+        />
+      );
+    case 'star':
+      return (
+        <polygon
+          data-shape-id={shape.id}
+          points={getStarPoints(shape.width, shape.height)}
+          transform={getLocalPolygonTransform(
+            shape.x,
+            shape.y,
+            shape.width,
+            shape.height,
+            shape.rotation,
+            shape.flipX,
+            shape.flipY,
+          )}
+          {...polygonProps(shape)}
         />
       );
     case 'group': {

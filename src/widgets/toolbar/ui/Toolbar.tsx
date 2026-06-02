@@ -74,6 +74,24 @@ export function Toolbar() {
         Ellipse
       </button>
       <button
+        className={`toolbar__button ${activeTool === 'triangle' ? 'toolbar__button--active' : ''}`}
+        onClick={() => setActiveTool('triangle')}
+        aria-label="Triangle tool"
+        aria-pressed={activeTool === 'triangle'}
+        title="Triangle (T)"
+      >
+        Triangle
+      </button>
+      <button
+        className={`toolbar__button ${activeTool === 'star' ? 'toolbar__button--active' : ''}`}
+        onClick={() => setActiveTool('star')}
+        aria-label="Star tool"
+        aria-pressed={activeTool === 'star'}
+        title="Star (S)"
+      >
+        Star
+      </button>
+      <button
         className={`toolbar__button ${activeTool === 'pan' ? 'toolbar__button--active' : ''}`}
         onClick={() => setActiveTool('pan')}
         aria-label="Pan tool"

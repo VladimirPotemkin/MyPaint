@@ -6,55 +6,58 @@ import { applyCommand } from '@/entities/document/model/commands';
 import { AddShapeCommand } from '@/entities/document/model/commands/AddShapeCommand';
 import type { Vec2 } from '@/shared/lib/point';
 import type { Shape } from '@/entities/document/model/types';
-import { snapToGrid } from '@/shared/lib/snap';
+import {
+  DRAWABLE_SHAPE_DEFAULTS,
+  isDrawableTool,
+  type DrawableTool,
+} from '@/entities/shape/lib/shapeDefaults';
+import { buildCreatePlacement, type FlippedBbox } from '@/entities/shape/lib/shapeAnchoredBbox';
 
-// Строим Shape из двух точек — вынесено чтобы не дублировать в move и up
+function isFlippedPlacement(p: ReturnType<typeof buildCreatePlacement>): p is FlippedBbox {
+  return 'flipX' in p;
+}
+
 function buildShape(
-  type: 'rect' | 'ellipse',
+  type: DrawableTool,
   start: Vec2,
   end: Vec2,
   gridSize: number | null,
 ): Shape {
-  const startX = gridSize === null ? start.x : snapToGrid(start.x, gridSize);
-  const startY = gridSize === null ? start.y : snapToGrid(start.y, gridSize);
-  const endX = gridSize === null ? end.x : snapToGrid(end.x, gridSize);
-  const endY = gridSize === null ? end.y : snapToGrid(end.y, gridSize);
-  const x = Math.min(startX, endX);
-  const y = Math.min(startY, endY);
-  const width = Math.abs(endX - startX);
-  const height = Math.abs(endY - startY);
-
-  return {
+  const placement = buildCreatePlacement(type, start, end, gridSize);
+  const defaults = DRAWABLE_SHAPE_DEFAULTS[type];
+  const base = {
     id: crypto.randomUUID(),
-    name: type === 'rect' ? 'Rectangle' : 'Ellipse',
-    type,
+    name: defaults.name,
     parentId: null,
-    x,
-    y,
-    width,
-    height,
+    x: placement.x,
+    y: placement.y,
+    width: placement.width,
+    height: placement.height,
     rotation: 0,
-    fill: type === 'ellipse' ? '#ff3b30' : '#4f8ef7',
+    fill: defaults.fill,
     stroke: 'transparent',
     strokeWidth: 0,
     opacity: 1,
     visible: true,
     locked: false,
   };
+
+  if ((type === 'triangle' || type === 'star') && isFlippedPlacement(placement)) {
+    return { ...base, type, flipX: placement.flipX, flipY: placement.flipY };
+  }
+  return { ...base, type };
 }
 
 export function useCreateShape() {
   const startPoint = useRef<Vec2 | null>(null);
-  // Сохраняем тип инструмента в момент pointerdown — activeTool может измениться
-  // пока пользователь держит кнопку, а ref не вызывает ре-рендер
-  const drawingType = useRef<'rect' | 'ellipse' | null>(null);
+  const drawingType = useRef<DrawableTool | null>(null);
 
   const activeTool = useEditorStore((s) => s.activeTool);
   const viewport = useEditorStore((s) => s.viewport);
   const setInteraction = useEditorStore((s) => s.setInteraction);
 
   const onPointerDown = (e: React.PointerEvent<SVGSVGElement>) => {
-    if (activeTool !== 'rect' && activeTool !== 'ellipse') return;
+    if (!isDrawableTool(activeTool)) return;
     e.currentTarget.setPointerCapture(e.pointerId);
     const rect = e.currentTarget.getBoundingClientRect();
     const current = screenToWorld(viewport, { x: e.clientX - rect.left, y: e.clientY - rect.top });
@@ -85,7 +88,6 @@ export function useCreateShape() {
       applyCommand(new AddShapeCommand(shape), editorStoreApi);
     }
 
-    // Сбрасываем в любом случае — маленькая фигура тоже считается отменой
     startPoint.current = null;
     drawingType.current = null;
     setInteraction(null);

@@ -11,6 +11,8 @@ const TOOL_BY_CODE: Partial<Record<string, ActiveTool>> = {
   [Key.KeyV]: 'select',
   [Key.KeyR]: 'rect',
   [Key.KeyE]: 'ellipse',
+  [Key.KeyT]: 'triangle',
+  [Key.KeyS]: 'star',
 };
 
 function handleDeleteKey(e: KeyboardEvent): boolean {
