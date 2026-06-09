@@ -12,6 +12,11 @@ export type EditorStore = {
   removeShape: (id: string) => void;
   setRootChildIds: (ids: string[]) => void;
 
+  // ── Слайс color ─────────────────────────────────
+  activeFill: string;
+  activeStroke: string;
+  setActiveColors: (patch: { fill?: string; stroke?: string }) => void;
+
   // ── Слайс selection ─────────────────────────────
   selection: string[];
   setSelection: (ids: string[]) => void;
@@ -121,6 +126,15 @@ export const useEditorStore = create<EditorStore>()(
       // tool
       activeTool: 'select',
       setActiveTool: (tool) => set({ activeTool: tool }),
+
+      // color
+      activeFill: '#4f8ef7',
+      activeStroke: 'transparent',
+      setActiveColors: (patch) =>
+        set((s) => ({
+          activeFill: patch.fill ?? s.activeFill,
+          activeStroke: patch.stroke ?? s.activeStroke,
+        })),
 
       // ui
       grid: { enabled: true, size: GRID_DEFAULT_SIZE, snapToGrid: false },

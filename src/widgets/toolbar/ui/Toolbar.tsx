@@ -1,7 +1,24 @@
-import { useRef } from 'react';
+import { useState, useRef } from 'react';
 import { useEditorStore, editorStoreApi } from '@/entities/document/model/store';
 import { serialize, deserialize } from '@/features/persistence/lib/serialize';
 import { groupSelectedShapes, ungroupSelectedShape } from '@/features/selection/lib/groupSelection';
+import {
+  RectangleHorizontal,
+  Ellipse,
+  Triangle,
+  Star,
+  SquareDashed,
+  Hand,
+  Group,
+  Ungroup,
+  FileDown,
+  FileUp,
+  Grid,
+  PenLine,
+} from 'lucide-react';
+import { ColorSwatch } from '@/features/shape-color/ui/ColorSwatch';
+import { ColorPickerPopover } from '@/features/shape-color/ui/ColorPickerPopover';
+import { useShapeColor } from '@/features/shape-color/lib/useShapeColor';
 
 export function Toolbar() {
   const setActiveTool = useEditorStore((state) => state.setActiveTool);
@@ -19,6 +36,11 @@ export function Toolbar() {
   const undo = useEditorStore((state) => state.undo);
   const redo = useEditorStore((state) => state.redo);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { fillColor, strokeColor, snapshotCurrentColors, previewColor, commitColor } =
+    useShapeColor();
+  const [openPicker, setOpenPicker] = useState<'fill' | 'stroke' | null>(null);
+  const fillRef = useRef<HTMLSpanElement>(null);
+  const strokeRef = useRef<HTMLSpanElement>(null);
 
   const handleExport = () => {
     const state = editorStoreApi.getState();
@@ -44,63 +66,127 @@ export function Toolbar() {
     });
   };
 
+  const handleSwatchClick = (target: 'fill' | 'stroke') => {
+    if (openPicker === target) {
+      setOpenPicker(null);
+      return;
+    }
+    snapshotCurrentColors(target);
+    setOpenPicker(target);
+  };
+
+  const handlePickerClose = (color: string, target: 'fill' | 'stroke') => {
+    commitColor(color, target);
+    setOpenPicker(null);
+  };
+
   return (
     <div className="toolbar" role="toolbar" aria-label="Editor tools">
-      <button
-        className={`toolbar__button ${activeTool === 'select' ? 'toolbar__button--active' : ''}`}
-        onClick={() => setActiveTool('select')}
-        aria-label="Select tool"
-        aria-pressed={activeTool === 'select'}
-        title="Select (V)"
-      >
-        Select
-      </button>
-      <button
-        className={`toolbar__button ${activeTool === 'rect' ? 'toolbar__button--active' : ''}`}
-        onClick={() => setActiveTool('rect')}
-        aria-label="Rectangle tool"
-        aria-pressed={activeTool === 'rect'}
-        title="Rectangle (R)"
-      >
-        Rect
-      </button>
-      <button
-        className={`toolbar__button ${activeTool === 'ellipse' ? 'toolbar__button--active' : ''}`}
-        onClick={() => setActiveTool('ellipse')}
-        aria-label="Ellipse tool"
-        aria-pressed={activeTool === 'ellipse'}
-        title="Ellipse (E)"
-      >
-        Ellipse
-      </button>
-      <button
-        className={`toolbar__button ${activeTool === 'triangle' ? 'toolbar__button--active' : ''}`}
-        onClick={() => setActiveTool('triangle')}
-        aria-label="Triangle tool"
-        aria-pressed={activeTool === 'triangle'}
-        title="Triangle (T)"
-      >
-        Triangle
-      </button>
-      <button
-        className={`toolbar__button ${activeTool === 'star' ? 'toolbar__button--active' : ''}`}
-        onClick={() => setActiveTool('star')}
-        aria-label="Star tool"
-        aria-pressed={activeTool === 'star'}
-        title="Star (S)"
-      >
-        Star
-      </button>
-      <button
-        className={`toolbar__button ${activeTool === 'pan' ? 'toolbar__button--active' : ''}`}
-        onClick={() => setActiveTool('pan')}
-        aria-label="Pan tool"
-        aria-pressed={activeTool === 'pan'}
-        title="Pan (Space + drag)"
-      >
-        Pan
-      </button>
-      <div style={{ width: 1, background: 'var(--color-border)', margin: '8px 4px' }} aria-hidden="true" />
+      <div className="toolbar__selections" aria-label="Selection tools">
+        <button
+          className={`toolbar__button ${activeTool === 'select' ? 'toolbar__button--active' : ''}`}
+          onClick={() => setActiveTool('select')}
+          aria-label="Select tool"
+          aria-pressed={activeTool === 'select'}
+          title="Select (V)"
+        >
+          <SquareDashed />
+        </button>
+        <button
+          className={`toolbar__button ${activeTool === 'pan' ? 'toolbar__button--active' : ''}`}
+          onClick={() => setActiveTool('pan')}
+          aria-label="Pan tool"
+          aria-pressed={activeTool === 'pan'}
+          title="Pan (Space + drag)"
+        >
+          <Hand />
+        </button>
+      </div>
+      <div
+        style={{ width: 1, background: 'var(--color-border)', margin: '8px 4px' }}
+        aria-hidden="true"
+      />
+
+      <div className="toolbar__colors">
+        <span ref={fillRef}>
+          <ColorSwatch
+            color={fillColor}
+            label="Fill"
+            isOpen={openPicker === 'fill'}
+            onClick={() => handleSwatchClick('fill')}
+          />
+        </span>
+        <span ref={strokeRef}>
+          <ColorSwatch
+            color={strokeColor}
+            label="Stroke"
+            isOpen={openPicker === 'stroke'}
+            onClick={() => handleSwatchClick('stroke')}
+            icon={PenLine}
+          />
+        </span>
+      </div>
+
+      {openPicker && (
+        <ColorPickerPopover
+          color={openPicker === 'fill' ? fillColor : strokeColor}
+          anchorRect={(openPicker === 'fill'
+            ? fillRef
+            : strokeRef
+          ).current!.getBoundingClientRect()}
+          onChange={(color) => previewColor(color, openPicker)}
+          onClose={(color) => handlePickerClose(color, openPicker)}
+        />
+      )}
+
+      <div
+        style={{ width: 1, background: 'var(--color-border)', margin: '8px 4px' }}
+        aria-hidden="true"
+      />
+
+      <div className="toolbar__shapes" aria-label="Shape tools">
+        <button
+          className={`toolbar__button ${activeTool === 'rect' ? 'toolbar__button--active' : ''}`}
+          onClick={() => setActiveTool('rect')}
+          aria-label="Rectangle tool"
+          aria-pressed={activeTool === 'rect'}
+          title="Rectangle (R)"
+        >
+          <RectangleHorizontal />
+        </button>
+        <button
+          className={`toolbar__button ${activeTool === 'ellipse' ? 'toolbar__button--active' : ''}`}
+          onClick={() => setActiveTool('ellipse')}
+          aria-label="Ellipse tool"
+          aria-pressed={activeTool === 'ellipse'}
+          title="Ellipse (E)"
+        >
+          <Ellipse />
+        </button>
+        <button
+          className={`toolbar__button ${activeTool === 'triangle' ? 'toolbar__button--active' : ''}`}
+          onClick={() => setActiveTool('triangle')}
+          aria-label="Triangle tool"
+          aria-pressed={activeTool === 'triangle'}
+          title="Triangle (T)"
+        >
+          <Triangle />
+        </button>
+        <button
+          className={`toolbar__button ${activeTool === 'star' ? 'toolbar__button--active' : ''}`}
+          onClick={() => setActiveTool('star')}
+          aria-label="Star tool"
+          aria-pressed={activeTool === 'star'}
+          title="Star (S)"
+        >
+          <Star />
+        </button>
+      </div>
+
+      <div
+        style={{ width: 1, background: 'var(--color-border)', margin: '8px 4px' }}
+        aria-hidden="true"
+      />
       <button
         className={`toolbar__button ${snapToGrid ? 'toolbar__button--active' : ''}`}
         onClick={() => setGrid({ snapToGrid: !snapToGrid })}
@@ -108,9 +194,12 @@ export function Toolbar() {
         aria-pressed={snapToGrid}
         title="Snap to grid"
       >
-        Snap
+        <Grid />
       </button>
-      <div style={{ width: 1, background: 'var(--color-border)', margin: '8px 4px' }} aria-hidden="true" />
+      <div
+        style={{ width: 1, background: 'var(--color-border)', margin: '8px 4px' }}
+        aria-hidden="true"
+      />
       <button
         type="button"
         className="toolbar__button"
@@ -119,7 +208,7 @@ export function Toolbar() {
         aria-label="Group selection"
         title="Group (Ctrl+G)"
       >
-        Group
+        <Group />
       </button>
       <button
         type="button"
@@ -129,16 +218,19 @@ export function Toolbar() {
         aria-label="Ungroup"
         title="Ungroup (Ctrl+Shift+G)"
       >
-        Ungroup
+        <Ungroup />
       </button>
-      <div style={{ width: 1, background: 'var(--color-border)', margin: '8px 4px' }} aria-hidden="true" />
+      <div
+        style={{ width: 1, background: 'var(--color-border)', margin: '8px 4px' }}
+        aria-hidden="true"
+      />
       <button
         className="toolbar__button"
         onClick={handleExport}
         aria-label="Export as JSON"
         title="Export scene as JSON"
       >
-        Export
+        <FileDown />
       </button>
       <button
         className="toolbar__button"
@@ -146,7 +238,7 @@ export function Toolbar() {
         aria-label="Import JSON"
         title="Import scene from JSON"
       >
-        Import
+        <FileUp />
       </button>
       <input
         ref={fileInputRef}
@@ -155,7 +247,10 @@ export function Toolbar() {
         onChange={handleImport}
         style={{ display: 'none' }}
       />
-      <div style={{ width: 1, background: 'var(--color-border)', margin: '8px 4px' }} aria-hidden="true" />
+      <div
+        style={{ width: 1, background: 'var(--color-border)', margin: '8px 4px' }}
+        aria-hidden="true"
+      />
       <button
         className="toolbar__button"
         onClick={undo}
@@ -163,7 +258,7 @@ export function Toolbar() {
         aria-label="Undo"
         title="Undo (Ctrl+Z)"
       >
-        ↩ Undo
+        ↩
       </button>
       <button
         className="toolbar__button"
@@ -172,7 +267,7 @@ export function Toolbar() {
         aria-label="Redo"
         title="Redo (Ctrl+Y)"
       >
-        ↪ Redo
+        ↪
       </button>
     </div>
   );

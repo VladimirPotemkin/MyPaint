@@ -17,12 +17,8 @@ function isFlippedPlacement(p: ReturnType<typeof buildCreatePlacement>): p is Fl
   return 'flipX' in p;
 }
 
-function buildShape(
-  type: DrawableTool,
-  start: Vec2,
-  end: Vec2,
-  gridSize: number | null,
-): Shape {
+function buildShape(type: DrawableTool, start: Vec2, end: Vec2, gridSize: number | null): Shape {
+  const { activeFill, activeStroke } = editorStoreApi.getState();
   const placement = buildCreatePlacement(type, start, end, gridSize);
   const defaults = DRAWABLE_SHAPE_DEFAULTS[type];
   const base = {
@@ -34,8 +30,8 @@ function buildShape(
     width: placement.width,
     height: placement.height,
     rotation: 0,
-    fill: defaults.fill,
-    stroke: 'transparent',
+    fill: activeFill,
+    stroke: activeStroke,
     strokeWidth: 0,
     opacity: 1,
     visible: true,

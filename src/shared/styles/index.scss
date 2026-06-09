@@ -14,3 +14,13 @@
   left: 0;
   z-index: 1000;
 }
+
+.toolbar__shapes {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.toolbar__colors {
+  display: flex;
+  gap: 0.5rem;
+}
